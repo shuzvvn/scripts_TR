@@ -119,5 +119,6 @@ for (Kgroup_h in Kgroups_uniq_subset)
     }
 }
 ave_cons_h <- mean(consistency)
+med_cons_h <- median(consistency)
 
-cat(c(score_h, ave_cons_h, frac_seqs_h, frac_DB_h, repeats_per_seqs_h, '\n'), sep="\t", file=opt$outfile)
+cat(c(score_h, ave_cons_h, med_cons_h, frac_seqs_h, frac_DB_h, repeats_per_seqs_h, '\n'), sep="\t", file=opt$outfile)
