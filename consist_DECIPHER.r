@@ -60,58 +60,63 @@ consistency <- c()
 
 for (Kgroup_h in Kgroups_uniq_subset)
 {
-    # MSA
-    MSA_h <- list_MSA[[Kgroup_h]]
-    MSA_len <- width(MSA_h)[1]
-    mt_rep_loc <- matrix(0, nrow = MSA_len, ncol = n_subset)
     DRresult_h <- list_DRresult_h[[Kgroup_h]]
-    for (row_h in seq(nrow(DRresult_h)))
+    if (nrow(DRresult_h)!=0) # ignore K group if no repeat detect
     {
-        index_h <- DRresult_h[row_h, 'Index']
-        begin_h <- DRresult_h[row_h, 'Begin']
-        end_h <- DRresult_h[row_h, 'End']
-        align_seq_h <- unlist(strsplit(toString(MSA_h[index_h]),""))
-        # convert position in ori_seq to position in alignment(with "-")
-        # marked as "1" if position in repeat region and not "-"
-        pos_ori <- 0
-        for (pos_align in seq(MSA_len))
+        # MSA
+        MSA_h <- list_MSA[[Kgroup_h]]
+        MSA_len <- width(MSA_h)[1]
+        mt_rep_loc <- matrix(0, nrow = MSA_len, ncol = n_subset)
+        for (row_h in seq(nrow(DRresult_h)))
         {
-            if (align_seq_h[pos_align] != '-')
+            index_h <- DRresult_h[row_h, 'Index']
+            begin_h <- DRresult_h[row_h, 'Begin']
+            end_h <- DRresult_h[row_h, 'End']
+            message <- paste(c(score_h, Kgroup_h, row_h, index_h, begin_h, end_h), sep='\t')
+            write(message, stderr())
+            align_seq_h <- unlist(strsplit(toString(MSA_h[index_h]),""))
+            # convert position in ori_seq to position in alignment(with "-")
+            # marked as "1" if position in repeat region and not "-"
+            pos_ori <- 0
+            for (pos_align in seq(MSA_len))
             {
-                pos_ori <- pos_ori + 1
-                if (between(pos_ori, begin_h, end_h))
+                if (align_seq_h[pos_align] != '-')
                 {
-                    mt_rep_loc[pos_align, index_h] <- 1
+                    pos_ori <- pos_ori + 1
+                    if (between(pos_ori, begin_h, end_h))
+                    {
+                        mt_rep_loc[pos_align, index_h] <- 1
+                    }
                 }
             }
         }
-    }
-    # pairwise identity for positive positions, ignore gaps
-    idents <- c()
-    for (pair_h in seq(ncol(pairs)))
-    {
-        index_1 <- pairs[1,pair_h]
-        index_2 <- pairs[2,pair_h]
-        n_rep_pos_1 <- sum(mt_rep_loc[,index_1])
-        n_rep_pos_2 <- sum(mt_rep_loc[,index_2])
-        n_rep_pos_both <- sum(mt_rep_loc[,index_1] & mt_rep_loc[,index_1]==mt_rep_loc[,index_2])
-        # ident = 0 if no repeat region found
-        if (n_rep_pos_1 == 0)
+        # pairwise identity for positive positions, ignore gaps
+        idents <- c()
+        for (pair_h in seq(ncol(pairs)))
         {
-            ident_1 <- 0
-        } else {
-            ident_1 <- n_rep_pos_both/n_rep_pos_1
+            index_1 <- pairs[1,pair_h]
+            index_2 <- pairs[2,pair_h]
+            n_rep_pos_1 <- sum(mt_rep_loc[,index_1])
+            n_rep_pos_2 <- sum(mt_rep_loc[,index_2])
+            n_rep_pos_both <- sum(mt_rep_loc[,index_1] & mt_rep_loc[,index_1]==mt_rep_loc[,index_2])
+            # ident = 0 if no repeat region found
+            if (n_rep_pos_1 == 0)
+            {
+                ident_1 <- 0
+            } else {
+                ident_1 <- n_rep_pos_both/n_rep_pos_1
+            }
+            if (n_rep_pos_2 == 0)
+            {
+                ident_2 <- 0
+            } else {
+                ident_2 <- n_rep_pos_both/n_rep_pos_2
+            }
+            
+            idents <- c(idents, mean(c(ident_1, ident_2)))
         }
-        if (n_rep_pos_2 == 0)
-        {
-            ident_2 <- 0
-        } else {
-            ident_2 <- n_rep_pos_both/n_rep_pos_2
-        }
-        
-        idents <- c(idents, mean(c(ident_1, ident_2)))
+        consistency <- c(consistency, mean(idents))
     }
-    consistency <- c(consistency, mean(idents))
 }
 ave_cons_h <- mean(consistency)
 
