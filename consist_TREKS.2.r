@@ -171,3 +171,4 @@ for (Kgroup_h in Kgroups_uniq)
 		line <- paste(Kgroup_h, n_seqs, n_seqs_r, NA, NA, 0, NA, sep='\t')
 		write(line, file=opt$out_tsv, append=TRUE)
 	}
+}
